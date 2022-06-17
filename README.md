@@ -29,7 +29,7 @@ const { fromat } = require('smtfmt');
 
 format('Hello');                   // -> Hello
 format('Hello, {0}!', 'World');    // -> Hello, World!
-format('The number is {0}', 1);     // -> The number is 1
+format('The number is {0}', 1);    // -> The number is 1
 format('{0} {1}', 1, 2);           // -> 1 2
 ```
 
@@ -40,7 +40,7 @@ import { fromat } from 'smtfmt';
 
 format('Hello');                   // -> Hello
 format('Hello, {0}!', 'World');    // -> Hello, World!
-format('The number is {0}', 1);     // -> The number is 1
+format('The number is {0}', 1);    // -> The number is 1
 format('{0} {1}', 1, 2);           // -> 1 2
 ```
 
