@@ -61,5 +61,8 @@
   },
   "dependencies": {
     "debug": "^4.3.4"
+  },
+  "engines": {
+    "typescript": ">=4.3.5"
   }
 }
