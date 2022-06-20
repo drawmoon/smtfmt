@@ -1,8 +1,9 @@
+import { FormattingException } from './formatting-exception';
 import { IOutput } from './interfaces';
 import { Format } from './parsing';
 import { SmartSettings } from './settings';
 import { SmartFormatter } from './smart-formatter';
-import { Argument } from './types';
+import { FormatArgument } from './types';
 
 /**
  * Contains extra information about the item currently being formatted.
@@ -11,7 +12,7 @@ import { Argument } from './types';
 export class FormatDetails {
   private _formatter: SmartFormatter;
   private _originalFormat: Format;
-  private _originalArgs: Argument[];
+  private _originalArgs: FormatArgument[];
   private _provider?: any;
   private _output: IOutput;
 
@@ -34,7 +35,7 @@ export class FormatDetails {
    * The original set of arguments passed to the format method.
    * These provide global-access to the original arguments.
    */
-  public get originalArgs(): Argument[] {
+  public get originalArgs(): FormatArgument[] {
     return this._originalArgs;
   }
 
@@ -55,6 +56,12 @@ export class FormatDetails {
   }
 
   /**
+   * If ErrorAction is set to OutputErrorsInResult, this will
+   * contain the exception that caused the formatting error.
+   */
+  public formattingException?: FormattingException;
+
+  /**
    * Contains case-sensitivity and other settings.
    */
   public get settings(): SmartSettings {
@@ -65,12 +72,12 @@ export class FormatDetails {
    * Initializes the FormatDetails instance.
    * @param {SmartFormatter} formatter 
    * @param {Format} originalFormat 
-   * @param {Argument[]} originalArgs 
+   * @param {FormatArgument[]} originalArgs 
    * @param {IFormatProvider} provider 
    * @param {IOutput} output 
    * @returns {FormatDetails} This FormatDetails instance.
    */
-  public initialize(formatter: SmartFormatter, originalFormat: Format, originalArgs: Argument[], provider: any, output: IOutput): this {
+  public initialize(formatter: SmartFormatter, originalFormat: Format, originalArgs: FormatArgument[], provider: any, output: IOutput): this {
     this._formatter = formatter;
     this._originalFormat = originalFormat;
     this._originalArgs = originalArgs;

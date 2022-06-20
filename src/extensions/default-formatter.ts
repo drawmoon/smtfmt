@@ -24,10 +24,9 @@ export class DefaultFormatter implements IFormatter {
 
     let result: string | undefined = undefined;
     if (typeof current === 'string') {
-      formattingInfo.write(current);
-      return true;
+      result = current;
     } else {
-      result = String(current);
+      result = current && String(current);
     }
     
     // Output the result:

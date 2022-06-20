@@ -2,12 +2,13 @@ import { Debug as debug } from './debug';
 import { getIndexToInsert } from './extensions';
 import { DefaultFormatter } from './extensions/default-formatter';
 import { FormatDetails } from './format-details';
+import { FormattingException } from './formatting-exception';
 import { FormattingInfo } from './formatting-info';
 import { IFormatter, IFormattingInfo, ISource } from './interfaces';
 import { StringOutput } from './output';
-import { Format, Parser, Placeholder } from './parsing';
+import { Format, FormatItem, Parser, Placeholder } from './parsing';
 import { SmartSettings } from './settings';
-import { Argument } from './types';
+import { FormatArgument } from './types';
 import { isLiteralText, isSourceExtension } from './util';
 
 /**
@@ -30,7 +31,7 @@ export class SmartFormatter {
 
   /**
    * Creates a new instance of a SmartFormatter.
-   * @param settings The SmartSettings to use, or null for default settings.
+   * @param settings The SmartSettings to use, or undefined for default settings.
    */
   constructor(settings?: SmartSettings) {
     this.settings = settings ?? new SmartSettings();
@@ -74,10 +75,10 @@ export class SmartFormatter {
   /**
    * Replaces one or more format items in a specified string with the string representation of a specific object.
    * @param {String} format A composite format string.
-   * @param {Argument[]} args The object to format.
+   * @param {FormatArgument[]} args The object to format.
    * @returns {String} Returns the formatted input with items replaced with their string representation.
    */
-  public format = (format: string, ...args: Argument[]): string => {
+  public format = (format: string, ...args: FormatArgument[]): string => {
     return this.formatWithFormatProvider(undefined, format, ...args);
   }
 
@@ -85,10 +86,10 @@ export class SmartFormatter {
    * Replaces one or more format items in a specified string with the string representation of a specific object.
    * @param {IFormatProvider} provider The IFormatProvider to use.
    * @param {String} format A composite format string.
-   * @param {Argument[]} args The object to format.
+   * @param {FormatArgument[]} args The object to format.
    * @returns {String} Returns the formatted input with items replaced with their string representation.
    */
-  public formatWithFormatProvider = (provider: any, format: string, ...args: Argument[]): string => {
+  public formatWithFormatProvider = (provider: any, format: string, ...args: FormatArgument[]): string => {
     const formatParsed = this.parser.parseFormat(format); // The parser gets the Format from the pool
 
     const stringOutput = new StringOutput();
@@ -137,7 +138,8 @@ export class SmartFormatter {
         this.evaluateSelectors(childFormattingInfo);
       } catch (e) {
         debug('evaluateSelectors failed');
-        this.formatError(e, childFormattingInfo);
+        const errorIndex = placeholder.format?.startIndex ?? placeholder.selectors[placeholder.selectors.length - 1].endIndex;
+        this.formatError(item, e, errorIndex, childFormattingInfo);
         continue;
       }
 
@@ -145,21 +147,36 @@ export class SmartFormatter {
         this.evaluateFormatters(childFormattingInfo);
       } catch (e) {
         debug('evaluateFormatters failed');
-        this.formatError(e, childFormattingInfo);
+        const errorIndex = placeholder.format?.startIndex ?? placeholder.selectors[placeholder.selectors.length - 1].endIndex;
+        this.formatError(item, e, errorIndex, childFormattingInfo);
       }
     }
   }
 
-  private formatError = (innerException: any, formattingIndo: IFormattingInfo): void => {
+  private formatError = (
+    errorItem: FormatItem,
+    innerException: FormattingException | Error | string | unknown,
+    startIndex: number,
+    formattingIndo: IFormattingInfo
+  ): void => {
+    debug('inner exception: %O', innerException);
+
     const { formatter: { errorAction } } = this.settings;
 
     switch (errorAction) {
       case 'ignore':
         return;
       case 'throwError':
-        throw innerException;
+        throw innerException instanceof FormattingException
+          ? innerException
+          : new FormattingException(innerException, startIndex, errorItem);
       case 'outputErrorInResult':
-        formattingIndo.write(innerException.message);
+        const exception = innerException instanceof FormattingException
+          ? innerException
+          : new FormattingException(innerException, startIndex, errorItem);
+        formattingIndo.formatDetails.formattingException = exception;
+        formattingIndo.write(exception.message);
+        formattingIndo.formatDetails.formattingException = undefined;
         break;
       case 'maintainTokens':
         formattingIndo.write(formattingIndo.placeholder?.rawText ?? "'null'");
@@ -215,7 +232,7 @@ export class SmartFormatter {
       }
 
       if (!handled) {
-        throw new Error(`No source extension could handle the selector named "${selector.rawText}"`);
+        throw formattingInfo.formattingException(`No source extension could handle the selector named "${selector.rawText}"`, selector);
       }
     }
   }
@@ -238,7 +255,7 @@ export class SmartFormatter {
   private evaluateFormatters = (formattingInfo: FormattingInfo): void => {
     const handled = this.invokeFormatterExtensions(formattingInfo);
     if (!handled) {
-      throw new Error('No suitable Formatter could be found');
+      throw formattingInfo.formattingException('No suitable Formatter could be found', formattingInfo.format);
     }
   }
 
