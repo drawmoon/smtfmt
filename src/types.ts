@@ -3,8 +3,8 @@ import { FormattingInfo } from './formatting-info';
 import { Format, FormatItem, Placeholder } from './parsing';
 import { SmartSettings } from './settings';
 
-type Primitive = string | number | boolean | symbol;
-export type Argument = Primitive | Date | { [key: string]: Primitive | Date };
+type Primitive = string | number | boolean | symbol | undefined;
+export type FormatArgument = Primitive | Date | { [key: string]: Primitive | Date };
 
 export interface FormatItemInitializeOptions {
   smartSettings: SmartSettings;

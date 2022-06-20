@@ -1,4 +1,5 @@
 import { FormatDetails } from './format-details';
+import { FormattingException } from './formatting-exception';
 import { IFormattingInfo, ISelectorInfo } from './interfaces';
 import { Format, FormatItem, Placeholder, Selector } from './parsing';
 import { FormattingInfoInitializeOptions } from './types';
@@ -156,9 +157,13 @@ export class FormattingInfo implements IFormattingInfo, ISelectorInfo {
    * @param {Number} startIndex The start index in the input format string.
    * @returns {FormattingException}
    */
-  public formattingException = (issue: string, problemItem?: FormatItem, startIndex?: number): any => {
-    console.log(issue, problemItem, startIndex);
-    throw new Error('Not implemented.');
+  public formattingException = (issue: string, problemItem?: FormatItem, startIndex?: number): FormattingException => {
+    problemItem ??= this.format;
+    startIndex ??= -1;
+    if (startIndex === -1) {
+      startIndex = problemItem?.startIndex ?? -1;
+    }
+    return new FormattingException(issue, startIndex, problemItem);
   }
 
   /**
