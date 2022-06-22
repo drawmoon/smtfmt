@@ -4,7 +4,7 @@
 
 Utilities for formatting and printing Strings.
 
-smtfmt is a port of [SmartFormat.NET](https://github.com/axuno/SmartFormat).
+smtfmt is ported from [SmartFormat.NET](https://github.com/axuno/SmartFormat).
 
 ## Installing
 

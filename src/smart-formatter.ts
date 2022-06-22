@@ -175,7 +175,7 @@ export class SmartFormatter {
           ? innerException
           : new FormattingException(innerException, startIndex, errorItem);
         formattingIndo.formatDetails.formattingException = exception;
-        formattingIndo.write(exception.message);
+        formattingIndo.write(exception.issue);
         formattingIndo.formatDetails.formattingException = undefined;
         break;
       case 'maintainTokens':
@@ -190,9 +190,7 @@ export class SmartFormatter {
     }
 
     const {
-      parser: {
-        alignmentOperator = ','
-      }
+      parser: { alignmentOperator }
     } = this.settings;
 
     let firstSelector = true;

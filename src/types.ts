@@ -1,10 +1,11 @@
+import { FormatDelegate } from './format-delegate';
 import { FormatDetails } from './format-details';
 import { FormattingInfo } from './formatting-info';
 import { Format, FormatItem, Placeholder } from './parsing';
 import { SmartSettings } from './settings';
 
 type Primitive = string | number | boolean | symbol | undefined;
-export type FormatArgument = Primitive | Date | { [key: string]: Primitive | Date };
+export type FormatArgument = Primitive | Date | { [key: string]: Primitive | Date } | FormatDelegate;
 
 export interface FormatItemInitializeOptions {
   smartSettings: SmartSettings;
