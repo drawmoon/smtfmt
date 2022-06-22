@@ -208,9 +208,9 @@ export class FormattingInfo implements IFormattingInfo, ISelectorInfo {
   
   /**
    * overload
-   * @param formatItem 
+   * @param {Placeholder | Format} formatItem 
    * @param value 
-   * @returns 
+   * @returns {FormattingInfo}
    */
   public createChild(formatItem: Placeholder | Format, value?: any): FormattingInfo {
     const fi = new FormattingInfo();
@@ -227,10 +227,9 @@ export class FormattingInfo implements IFormattingInfo, ISelectorInfo {
     const filler = this.alignment - textLength;
     if (filler > 0) {
       const {
-        formatter: {
-          alignmentFillCharacter = ' ',
-        }
+        formatter: { alignmentFillCharacter }
       } = this.formatDetails.settings;
+
       this.formatDetails.output.write(String.prototype.padEnd(filler, alignmentFillCharacter), this);
     }
   }
@@ -239,10 +238,9 @@ export class FormattingInfo implements IFormattingInfo, ISelectorInfo {
     const filler = -this.alignment - textLength;
     if (filler > 0) {
       const {
-        formatter: {
-          alignmentFillCharacter = ' ',
-        }
+        formatter: { alignmentFillCharacter }
       } = this.formatDetails.settings;
+
       this.formatDetails.output.write(String.prototype.padStart(filler, alignmentFillCharacter), this);
     }
   }

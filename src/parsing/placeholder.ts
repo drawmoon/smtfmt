@@ -48,9 +48,7 @@ export class Placeholder extends FormatItem {
    */
   public addSelector(selector: Selector): void {
     const {
-      parser: {
-        alignmentOperator = ','
-      }
+      parser: { alignmentOperator }
     } = this.smartSettings;
 
     if (selector.operatorLength > 0

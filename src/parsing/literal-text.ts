@@ -44,10 +44,7 @@ export class LiteralText extends FormatItem {
     }
 
     const {
-      parser: {
-        convertCharacterStringLiterals = true,
-        charLiteralEscapeChar = '\\',
-      }
+      parser: { convertCharacterStringLiterals, charLiteralEscapeChar }
     } = this.smartSettings;
 
     // The buffer is only for 1 character - each escaped char goes into its own LiteralText

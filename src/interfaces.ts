@@ -1,5 +1,6 @@
 import { FormatDetails } from './format-details';
-import { Format, Placeholder } from './parsing';
+import { FormattingException } from './formatting-exception';
+import { Format, FormatItem, Placeholder } from './parsing';
 import { SmartFormatter } from './smart-formatter';
 
 /**
@@ -78,10 +79,10 @@ export interface IFormattingInfo {
   /**
    * Creates a FormattingException associated with the IFormattingInfo.Format.
    * @param {String} issue 
-   * @param {Object} problemItem 
+   * @param {FormatItem} problemItem 
    * @param {Number} startIndex 
    */
-  formattingException(issue: string, problemItem?: any, startIndex?: number): any;
+  formattingException(issue: string, problemItem?: FormatItem, startIndex?: number): FormattingException;
 }
 
 /**
@@ -157,4 +158,16 @@ export interface IInitializer {
    * @param smartFormatter 
    */
   initialize(smartFormatter: SmartFormatter): void;
+}
+
+/**
+ * Provides functionality to format the value of an object into a string representation.
+ */
+export interface IFormattable {
+  /**
+   * Formats the value of the current instance using the specified format.
+   * @param {String} format 
+   * @returns {String}
+   */
+  toString(format: string | undefined): string;
 }

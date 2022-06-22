@@ -1,5 +1,6 @@
 import { Debug as debug } from '../debug';
 import { IFormatter, IFormattingInfo } from '../interfaces';
+import { isFormattable } from '../util';
 
 /**
  * The default IFormatter implementation.
@@ -23,7 +24,11 @@ export class DefaultFormatter implements IFormatter {
     }
 
     let result: string | undefined = undefined;
-    if (typeof current === 'string') {
+    // implemented IFormattable
+    if (isFormattable(current)) {
+      const formatText = format?.toString();
+      result = current.toString(formatText);
+    } else if (typeof current === 'string') {
       result = current;
     } else {
       result = current && String(current);

@@ -60,7 +60,7 @@ export class Parser {
     this._resultFormat.initialize({ smartSettings: this.settings, baseString: this._inputFormat });
 
     // Store parsing errors until parsing is finished:
-    let parsingErrors = {};
+    const parsingErrors = {};
 
     let currentPlaceholder: Placeholder | undefined = undefined;
 
@@ -68,10 +68,7 @@ export class Parser {
     let nestedDepth = 0;
 
     const {
-      parser: {
-        placeholderBeginChar = '{',
-        placeholderEndChar = '}',
-      }
+      parser: { placeholderBeginChar, placeholderEndChar }
     } = this.settings;
 
     for (this._index.current = 0; this._index.current < this._inputFormat.length; this._index.current++) {
@@ -86,9 +83,9 @@ export class Parser {
             continue;
           }
 
-          const result = this.createNewPlaceholder(nestedDepth);
-          currentPlaceholder = result[0];
-          nestedDepth = result[1];
+          const [refPlaceholder, refNestedDepth] = this.createNewPlaceholder(nestedDepth);
+          currentPlaceholder = refPlaceholder;
+          nestedDepth = refNestedDepth;
         } else if (inputChar === placeholderEndChar) {
           debug('checking placeholder end char');
 
@@ -109,10 +106,9 @@ export class Parser {
         // we're parsing the selectors:
         debug('placeholder is not null, parsing the selectors');
 
-        const result = this.parseSelector(currentPlaceholder, parsingErrors, nestedDepth);
-        currentPlaceholder = result[0];
-        parsingErrors = result[1];
-        nestedDepth = result[2];
+        const [refPlaceholder, refNestedDepth] = this.parseSelector(currentPlaceholder, parsingErrors, nestedDepth);
+        currentPlaceholder = refPlaceholder;
+        nestedDepth = refNestedDepth;
       }
     }
 
@@ -228,17 +224,16 @@ export class Parser {
    * @param {Placeholder} currentPlaceholder 
    * @param {ParsingErrors} parsingErrors 
    * @param {Number} nestedDepth 
+   * @returns {[Placeholder, Number]}
    */
-  private parseSelector(currentPlaceholder: Placeholder | undefined, parsingErrors: any, nestedDepth: number): [Placeholder | undefined, any, number] {
+  private parseSelector(currentPlaceholder: Placeholder | undefined, parsingErrors: any, nestedDepth: number): [Placeholder | undefined, number] {
     if (!currentPlaceholder) {
       throw new Error('currentPlaceholder is undefined');
     }
 
     const {
-      parser: {
-        formatterNameSeparator = ':',
-        placeholderEndChar = '}',
-      }
+      stringFormatCompatibility,
+      parser: { formatterNameSeparator, placeholderEndChar }
     } = this.settings;
 
     const inputChar = this._inputFormat[this._index.current];
@@ -257,20 +252,39 @@ export class Parser {
           operatorStartIndex: this._index.operator,
           selectorIndex: this._index.selector
         });
+
         currentPlaceholder.addSelector(selector);
+
         this._index.selector++;
         this._index.operator = this._index.current;
       }
     } else if (inputChar === formatterNameSeparator) {
       debug('formatter name separator');
 
-      throw new Error('Not implemented.');
+      // Add the selector:
+      currentPlaceholder = this.addLastSelector(currentPlaceholder, parsingErrors);
+
+      // Start the format:
+      const newFormat = new Format();
+      newFormat.initialize({
+        smartSettings: this.settings,
+        parent: currentPlaceholder,
+        startIndex: this._index.current + 1,
+        baseString: currentPlaceholder.baseString,
+      });
+      currentPlaceholder.format = newFormat;
+      this._resultFormat = newFormat;
+      currentPlaceholder = undefined;
+
+      // named formatters will not be parsed with string.Format compatibility switched ON.
+      // But this way we can handle e.g. format("{Date:yyyy/MM/dd HH:mm:ss}")
+      this._index.namedFormatterStart = stringFormatCompatibility ? positionUndefined : this._index.lastEnd;
+      this._index.namedFormatterOptionsStart = positionUndefined;
+      this._index.namedFormatterOptionsEnd = positionUndefined;
     } else if (inputChar === placeholderEndChar) {
       debug('placeholder end char');
 
-      const result = this.addLastSelector(currentPlaceholder, parsingErrors);
-      currentPlaceholder = result[0];
-      parsingErrors = result[1];
+      currentPlaceholder = this.addLastSelector(currentPlaceholder, parsingErrors);
 
       // End the placeholder with no format:
       nestedDepth--;
@@ -283,21 +297,19 @@ export class Parser {
       }
     }
     
-    return [currentPlaceholder, parsingErrors, nestedDepth];
+    return [currentPlaceholder, nestedDepth];
   }
 
   /**
    * Adds a Selector to the current Placeholder
    * because the current character ':' or '}' indicates the end of a selector.
-   * @param currentPlaceholder 
-   * @param parsingErrors 
+   * @param {Placeholder} currentPlaceholder 
+   * @param {ParsingErrors} parsingErrors 
+   * @returns {Placeholder}
    */
-  private addLastSelector(currentPlaceholder: Placeholder, parsingErrors: any): [Placeholder, any] {
+  private addLastSelector(currentPlaceholder: Placeholder, parsingErrors: any): Placeholder {
     const {
-      parser: {
-        listIndexEndChar = ']',
-        nullableOperator = '?',
-      }
+      parser: { listIndexEndChar, nullableOperator }
     } = this.settings;
 
     if (this._index.current !== this._index.lastEnd
@@ -315,12 +327,13 @@ export class Parser {
       });
       currentPlaceholder.addSelector(selector);
     } else if (this._index.operator !== this._index.current) { // the selector only contains illegal ("trailing") operator characters
+      debug('add issue, errors: %O', parsingErrors);
       throw new Error('Not implemented.');
     }
 
     this._index.lastEnd = this._index.safeAdd(this._index.current, 1);
 
-    return [currentPlaceholder, parsingErrors];
+    return currentPlaceholder;
   }
 }
 
